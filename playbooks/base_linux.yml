@@ -1,0 +1,46 @@
+---
+#Run this with ansible-playbook learning.yml
+- hosts: samvers
+  remote_user: serbahadur 
+  become: root
+  become_method: su
+  tasks:
+   - name: patch and install package
+     yum:
+       name: 
+       - bmon
+       - htop
+       - '*'       
+       state: latest
+   - name: Useradd
+     ansible.builtin.user:
+       name: serbahadur
+       groups: root
+       append: yes
+   - name: SSH Keys, User ko authorized keys
+     authorized_key:
+       user: serbahadur
+       key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+       exclusive: yes
+   - name: add user to sudo serbahadur sudo satta kabja 
+     copy:
+       content: ansible ALL=(ALL) ALL
+       dest: /etc/sudoers.d/ansible
+       mode: 0600
+   - name: no root ssh prachanda lai no root acces
+     shell: sed -i 's/PermitRootLogin yes/PermitRootLogin no/g' /etc/ssh/sshd_config
+     args:
+       executable: /bin/bash
+
+   - name: no password ssh
+     lineinfile:
+       path: /etc/ssh/sshd_config
+       regexp: '^PasswordAuthentication '
+       insertafter: '^#PasswordAuthentication '
+       line: 'PasswordAuthentication no'
+   - name: reload to take effect
+     shell: sudo systemctl reload sshd
+     args:
+       executable: /bin/bash
+
+...
